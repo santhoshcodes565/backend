@@ -48,8 +48,18 @@ app.use('/api/', generalLimiter);
 // ─── Core Middleware ─────────────────────────────────────
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests from any localhost port during development
-    if (!origin || origin.startsWith('http://localhost')) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost during development and FRONTEND_URL in production
+    const allowedOrigins = [
+      'http://localhost:5173', 
+      'http://localhost:5174', 
+      'http://localhost:3000',
+      process.env.FRONTEND_URL
+    ];
+
+    if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -76,6 +86,11 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/notifications', require('./routes/notifications'));
+
+// ─── Root Route ──────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.send('Backend is running successfully');
+});
 
 // ─── Health Check ────────────────────────────────────────
 app.get('/api/health', (req, res) => {
